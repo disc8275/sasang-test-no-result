@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -9,7 +10,6 @@ from datetime import datetime
 # ==========================================
 # [설정] 이메일 발송 정보 (보안 적용)
 # ==========================================
-# secrets가 설정되어 있지 않은 경우 에러 방지를 위해 예외처리 혹은 더미값 사용 권장
 try:
     SENDER_EMAIL = st.secrets["SENDER_EMAIL"]
     SENDER_PASSWORD = st.secrets["SENDER_PASSWORD"]
@@ -25,35 +25,115 @@ RECEIVER_EMAIL = "ds1lih@naver.com"
 # ==========================================
 st.set_page_config(page_title="사상체질 모바일 진단", layout="centered")
 
+# CSS 스타일 수정: 다크모드/라이트모드 자동 호환
 st.markdown("""
     <style>
-    .main { background-color: #f9f9f9; }
-    h1 { color: #2c3e50; font-size: 1.5rem; }
-    h3 { color: #16a085; font-size: 1.2rem; }
+    /* 배경색 강제 지정 제거 (다크모드 호환을 위해) */
+    
+    /* 제목 색상을 테마 기본 텍스트 색상으로 변경 */
+    h1 { 
+        color: var(--text-color); 
+        font-size: 1.5rem; 
+    }
+    
+    /* 부제목 색상을 테마 포인트 색상으로 변경 */
+    h3 { 
+        color: var(--primary-color); 
+        font-size: 1.2rem; 
+    }
+    
     .stButton button {
         height: 3rem;
         font-size: 1.1rem;
         border-radius: 10px;
     }
+    
     div[data-testid="stRadio"] label {
         font-size: 1.1rem !important;
         padding: 10px 0;
         cursor: pointer;
     }
+    
+    /* 질문 텍스트 스타일 수정 */
     .question-text {
         font-size: 1.3rem;
         font-weight: bold;
-        color: #333;
+        /* 고정된 색상(#333)을 제거하고 Streamlit 테마 변수 사용 */
+        color: var(--text-color); 
         margin-bottom: 20px;
         line-height: 1.5;
     }
     
+    /* 인쇄 시 강제 페이지 넘김을 위한 클래스 */
     @media print {
-        section[data-testid="stSidebar"], header, footer, .stAppDeployButton, button, iframe, .stButton, div[data-testid="stHorizontalBlock"], .stProgress {
-            display: none !important;
+        .page-break { 
+            page-break-before: always !important; 
+            display: block !important;
+            height: 1px;
         }
+    }
+    
+    /* 인쇄 최적화 스타일 (머리글/바닥글 제거 및 빈 페이지 방지) */
+    @media print {
+        @page {
+            margin: 0mm !important; 
+            size: auto;
+        }
+
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            /* 인쇄 시에는 글자를 무조건 검정으로 (종이 절약/가독성) */
+            color: black !important; 
+            background-color: white !important;
+        }
+        
+        .stApp {
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        .block-container {
+            margin: 15mm 15mm 0 15mm !important; 
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            width: auto !important;
+        }
+
+        /* 인쇄 시 모든 텍스트 강제 검정색 */
+        h1, h3, .question-text, p, div {
+            color: black !important;
+            -webkit-text-fill-color: black !important;
+        }
+
+        section[data-testid="stSidebar"], 
+        header, 
+        footer, 
+        .stAppDeployButton, 
+        button, 
+        .stButton, 
+        div[data-testid="stHorizontalBlock"], 
+        .stProgress,
+        iframe {
+            display: none !important;
+            height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        iframe[title="streamlit.components.v1.components.html"] {
+            display: none !important;
+            height: 0 !important;
+        }
+
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        html, body { height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -279,14 +359,14 @@ def main():
         st.write("")
         st.write("")
         
-        # [수정] 이전/다음 버튼을 컬럼으로 나누어 배치
+        # 버튼을 2개 컬럼으로 나눔 (이전 / 다음)
         col_prev, col_next = st.columns(2)
-
+        
         with col_prev:
             if st.button("⬅️ 이전", use_container_width=True):
                 go_prev()
                 st.rerun()
-
+                
         with col_next:
             if st.button("다음 ➡️", use_container_width=True):
                 score_val = OPTIONS.index(choice)
@@ -381,19 +461,198 @@ def main():
                 st.rerun()
 
     # ----------------------------------
-    # 결과 화면 (환자에게는 완료 메시지만 표시)
+    # 결과 화면
     # ----------------------------------
     elif current_step == 999:
-        st.success("✅ 설문이 완료되었습니다.")
+        res = st.session_state['final_result']
+        my_code = res['code']
+        rec = res['rec']
+        scores = res['scores']
+
+        st.balloons()
         
-        st.markdown("""
-        <div style="text-align: center; padding: 20px;">
-            <h3>진단 결과가 담당 의료진에게 전송되었습니다.</h3>
-            <p>참여해 주셔서 감사합니다.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # 동점자 처리 및 타이틀
+        max_score = max(scores.values())
+        tied_keys = [k for k, v in scores.items() if v == max_score]
+
+        if len(tied_keys) > 1:
+            tied_names = [TYPE_MAP[k] for k in tied_keys]
+            title_text = " 또는 ".join(tied_names)
+            st.title(f"🎉 당신은 [{title_text}]일 확률이 같습니다!")
+            st.warning(f"📢 **알림:** 점수가 동일하여 **{title_text}** 모두 해당될 가능성이 있습니다.\n\n시스템은 그중 **[{TYPE_MAP[my_code]}]**을 기준으로 상세 결과와 처방을 보여드립니다.")
+            my_name = TYPE_MAP[my_code]
+        else:
+            my_name = TYPE_MAP[my_code]
+            st.title(f"🎉 당신은 [{my_name}] 입니다!")
+
+        # 차트 표시
+        st.write("체질별 점수")
+        chart_df = pd.DataFrame({'체질': [TYPE_MAP[k] for k in scores], '점수': list(scores.values())})
+        st.bar_chart(chart_df.set_index('체질'))
         
-        if st.button("🔄 처음으로 돌아가기", use_container_width=True):
+        # 처방 표시
+        st.success(f"### 💊 추천 처방: {rec['prescription']}")
+        st.info(f"**상태:** {rec['condition']}\n\n**설명:** {rec['desc']}")
+
+        # ------------------------------------------
+        # [중요] 인쇄 시 페이지 나누기 (Page Break)
+        # ------------------------------------------
+        st.markdown('<div class="page-break"></div>', unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.header(f"📋 {my_name} 상세 건강 가이드")
+
+        # =========================================================
+        # 상세 건강 가이드 (이전 STEP 1000 내용 통합)
+        # =========================================================
+        if my_code == 'SE': # 소음인
+            st.markdown("""
+            **1. 소음인의 특징**
+            * 몸이 찬 편입니다.
+            * 전반적인 체력이 약한 편입니다.
+            * 소화기의 기능이 약해지기 쉽습니다.
+            """)
+            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
+            st.warning("""
+            * **전신:** 무리를 하지 않았는데도 피로감이 지속되고, 아침에 일어나기 힘듭니다.
+            * **소화:** 식욕이 떨어지고 소화가 잘 안 되며, 배에 가스가 찹니다.
+            * **배설:** 설사를 자주 하거나, 대변이 가늘면서 시원하지 않습니다.
+            * **기타:** 손발과 배가 차고, 특별한 이유 없이 마음이 늘 불안합니다.
+            """)
+            st.info("""
+            **💡 평소 생활 실천 사항**
+            1. **보온:** 항상 몸을 따뜻하게 합니다.
+            2. **휴식:** 과로를 피하고 적절한 휴식이 필요합니다.
+            3. **식사:** 규칙적인 식사가 중요하며, 따뜻한 성질의 음식이나 약간의 자극성 있는 조미료가 좋습니다.
+            """)
+            
+            st.subheader("🥗 소음인에게 이로운 음식")
+            food_data = {
+                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
+                "권장 음식": [
+                    "백미, 차조, 찹쌀, 감자, 옥수수 / (떡, 누룽지)",
+                    "닭고기(껍질/기름 제거), 명태, 조기, 도미, 대구, 민어, 농어, 가자미, 멸치",
+                    "삼치, 갈치, 장어, 민어, 도루묵",
+                    "닭고기(껍질 포함), 개고기, 뱀장어",
+                    "깻잎, 냉이, 시금치, 양배추, 브로콜리, 마늘, 파, 고추, 양파, 부추, 쑥",
+                    "들깨, 참기름, 산양유 / 사과, 귤, 토마토, 복숭아, 대추, 유자"
+                ]
+            }
+            st.table(pd.DataFrame(food_data).set_index("분류"))
+
+        elif my_code == 'SY': # 소양인
+            st.markdown("""
+            **1. 소양인의 특징**
+            * 몸에 열이 많습니다.
+            * 신경이 예민하고, 피부, 장, 방광 등이 과민한 편입니다.
+            """)
+            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
+            st.warning("""
+            * **수면/정서:** 잠들기 어렵고 자주 깨며, 마음이 조급하고 불안합니다.
+            * **배설:** 소변을 자주 보거나 색이 진하며, 변비나 설사가 잦습니다.
+            * **신체:** 얼굴이나 피부 트러블이 잦고, 입이 마르며 갈증이 납니다.
+            * **소화:** 가슴이 답답하고 속이 쓰리거나 구역질을 합니다.
+            """)
+            st.info("""
+            **💡 평소 생활 실천 사항**
+            1. **수면/마음:** 충분한 수면을 취하고, 매사에 여유를 가지려 노력하세요.
+            2. **식사:** 천천히 식사하며, 서늘한 성질의 음식/해물/채소가 좋습니다.
+            3. **피할 것:** 맵고 짠 음식, 성질이 더운 음식을 피하세요.
+            4. **운동:** 하체를 강화시켜 주는 운동(등산, 자전거 등)이 좋습니다.
+            """)
+            
+            st.subheader("🥗 소양인에게 이로운 음식")
+            food_data = {
+                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
+                "권장 음식": [
+                    "보리, 팥, 녹두 / (메밀, 고구마, 토란)",
+                    "돼지고기(살코기), 오리고기, 복어, 굴, 새우, 오징어, 낙지, 조개, 게, 해삼",
+                    "돼지고기(안심), 계란 / (두부, 고등어, 꽁치)",
+                    "삼겹살, 족발, 돼지갈비, 베이컨",
+                    "오이, 가지, 배추, 상추, 우엉, 숙주나물, 죽순",
+                    "참깨, 참기름, 우유 / 딸기, 수박, 바나나, 참외, 메론, 키위"
+                ]
+            }
+            st.table(pd.DataFrame(food_data).set_index("분류"))
+
+        elif my_code == 'TE': # 태음인
+            st.markdown("""
+            **1. 태음인의 특징**
+            * 섭취한 에너지를 소모시키고 배설시키는 것이 취약합니다.
+            * 체구가 큰 편이고, 식욕과 위장기능이 좋아 비만해지기 쉽습니다.
+            """)
+            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
+            st.warning("""
+            * **체중/식욕:** 살이 찌고, 배가 부른데도 자꾸 먹게 됩니다.
+            * **배설:** 대변이 굳거나 설사가 잦아지는 등 양상이 달라집니다.
+            * **신체:** 땀이 잘 나지 않거나, 상체로만 진땀이 많이 납니다. 아침에 얼굴/손발이 붓습니다.
+            * **피부:** 얼굴이 붉어지고 열감이 많으며, 피부 트러블이 잦습니다.
+            """)
+            st.info("""
+            **💡 평소 생활 실천 사항**
+            1. **관리:** 변비와 체중 증가를 항상 경계해야 합니다.
+            2. **식사:** 과식/폭식/야식을 피하고, 천천히 먹습니다. 식후 바로 눕지 마세요.
+            3. **운동:** 땀을 흘릴 정도의 유산소 운동(열량 소모 많은 운동)이 좋습니다.
+            """)
+            
+            st.subheader("🥗 태음인에게 이로운 음식")
+            food_data = {
+                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
+                "권장 음식": [
+                    "현미, 율무, 콩, 고구마, 옥수수, 토란, 밤, 마, 잣, 호두, 땅콩",
+                    "소고기(사태, 홍두깨), 대구, 조기, 명태, 민어, 오징어",
+                    "소고기(등심, 안심), 고등어, 꽁치, 갈치, 두부, 콩비지",
+                    "소갈비, 뱀장어, 유부, 치즈",
+                    "무, 호박, 콩나물, 고사리, 버섯, 김, 미역, 다시마, 도라지, 연근, 당근",
+                    "들기름, 올리브유, 우유, 두유 / 배, 매실, 자두, 살구"
+                ]
+            }
+            st.table(pd.DataFrame(food_data).set_index("분류"))
+
+        elif my_code == 'TY': # 태양인
+            st.markdown("""
+            **1. 태양인의 특징**
+            * 에너지를 축적하는 기능은 약하고, 발산/소모시키는 기능은 강합니다.
+            * 머리와 목덜미가 발달한 반면, 허리나 하체가 빈약한 편입니다.
+            """)
+            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
+            st.warning("""
+            * **신체:** 쉽게 몸살이 나고, 하체가 쉽게 피로하여 오래 걷기 힘듭니다.
+            * **배설:** 소변 양과 횟수가 줄거나, 대변이 염소똥처럼 굳어집니다.
+            * **입/소화:** 입 안에 맑은 침이나 거품이 고이고, 구역질을 합니다.
+            * **정서:** 매사에 조급해지고 화가 잘 납니다.
+            """)
+            st.info("""
+            **💡 평소 생활 실천 사항**
+            1. **식사:** 매운 자극성 음식, 고지방 음식을 피하고 담백한 음식/해물/채소가 좋습니다.
+            2. **운동:** 과격한 운동은 피하고, 허리/하체 근력 강화 운동을 하세요.
+            3. **마음:** 조급해하지 말고 여유를 가지며, 원만한 인간관계를 유지하세요.
+            """)
+            
+            st.subheader("🥗 태양인에게 이로운 음식")
+            food_data = {
+                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
+                "권장 음식": [
+                    "메밀(국수, 묵, 밥) / (보리, 녹두, 팥)",
+                    "굴, 새우, 게, 오징어, 문어, 전복, 조개, 해삼, 홍합 / (흰살생선)",
+                    "(사용 가능) 고등어, 꽁치, 장어",
+                    "(해당 없음 / 육류는 피하는 것이 좋음)",
+                    "상추, 깻잎, 배추, 오이, 가지, 시금치, 우엉, 숙주나물, 죽순",
+                    "참깨 / 포도, 머루, 다래, 감, 키위, 파인애플, 오렌지"
+                ]
+            }
+            st.table(pd.DataFrame(food_data).set_index("분류"))
+
+        st.markdown("---")
+        
+        # 인쇄 버튼 (인쇄 시에는 보이지 않음)
+        print_btn_code = """
+        <script>function printPage() { window.parent.print(); }</script>
+        <button onclick="printPage()" style="width:100%; padding:10px; background:white; border:1px solid #ddd; border-radius:5px;">🖨️ 결과 저장/인쇄</button>
+        """
+        components.html(print_btn_code, height=50)
+        
+        if st.button("🔄 처음부터 다시하기", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
