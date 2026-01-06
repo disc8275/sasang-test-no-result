@@ -356,12 +356,11 @@ def main():
         st.markdown("""
         <div style="text-align: center; padding: 20px;">
             <h3>진단 결과가 담당 의료진에게 전송되었습니다.</h3>
-            <p>잠시만 대기해 주시면 진료실에서 상세한 상담을 도와드리겠습니다.</p>
             <p>참여해 주셔서 감사합니다.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("🔄 처음으로 돌아가기 (다음 환자)", use_container_width=True):
+        if st.button("🔄 처음으로 돌아가기", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
