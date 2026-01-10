@@ -15,99 +15,130 @@ try:
     SENDER_PASSWORD = st.secrets["SENDER_PASSWORD"]
 except:
     # 로컬 테스트용 더미 값 (실제 배포시 secrets 설정 필수)
-    SENDER_EMAIL = "test@example.com"
-    SENDER_PASSWORD = "password"
+    SENDER_EMAIL = "disc8275@gmail.com" 
+    SENDER_PASSWORD = "axrd kith cizs svzg" 
 
-RECEIVER_EMAIL = "ds1lih@naver.com" 
+RECEIVER_EMAIL = "ds1lih@naver.com" # 관리자 이메일
 
 # ==========================================
 # 1. 페이지 설정 및 스타일
 # ==========================================
-st.set_page_config(page_title="디스코한의원 문진표", layout="centered")
+st.set_page_config(page_title="사상체질 문진표", layout="centered")
 
-# CSS 스타일 수정: 다크모드/라이트모드 자동 호환
 st.markdown("""
     <style>
-    /* 배경색 강제 지정 제거 (다크모드 호환을 위해) */
-    
-    /* 제목 색상을 테마 기본 텍스트 색상으로 변경 */
+    /* [화면 표시용 스타일] */
     h1 { 
-        color: var(--text-color); 
         font-size: 1.5rem; 
+        font-weight: 700;
     }
-    
-    /* 부제목 색상을 테마 포인트 색상으로 변경 */
     h3 { 
-        color: var(--primary-color); 
+        color: #16a085; 
         font-size: 1.2rem; 
     }
-    
     .stButton button {
         height: 3rem;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         border-radius: 10px;
     }
-    
     div[data-testid="stRadio"] label {
         font-size: 1.1rem !important;
         padding: 10px 0;
         cursor: pointer;
+        color: var(--text-color) !important; 
     }
-    
-    /* 질문 텍스트 스타일 수정 */
     .question-text {
         font-size: 1.3rem;
         font-weight: bold;
-        /* 고정된 색상(#333)을 제거하고 Streamlit 테마 변수 사용 */
         color: var(--text-color); 
         margin-bottom: 20px;
         line-height: 1.5;
     }
     
-    /* 인쇄 시 강제 페이지 넘김을 위한 클래스 */
-    @media print {
-        .page-break { 
-            page-break-before: always !important; 
-            display: block !important;
-            height: 1px;
-        }
+    /* [공통 테이블 스타일] */
+    .guide-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        font-size: 1rem;
+    }
+    .guide-table th {
+        background-color: #f0f2f6;
+        color: #333;
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+        font-weight: bold;
+    }
+    .guide-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        vertical-align: top;
+        color: var(--text-color);
     }
     
-    /* 인쇄 최적화 스타일 (머리글/바닥글 제거 및 빈 페이지 방지) */
+    @media (prefers-color-scheme: dark) {
+        .guide-table th {
+            background-color: #444;
+            color: #fff;
+            border-color: #666;
+        }
+        .guide-table td {
+            border-color: #666;
+        }
+    }
+
+    /* [인쇄 전용 스타일] */
     @media print {
+        * { 
+            color: black !important; 
+            background-color: white !important;
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+        }
+
+        .guide-table th {
+            background-color: #eee !important;
+            color: black !important;
+            border: 1px solid black !important;
+        }
+        .guide-table td {
+            color: black !important;
+            border: 1px solid black !important;
+        }
+
+        .page-break { 
+            page-break-before: always !important; 
+            display: block !important; 
+            height: 1px; 
+        }
+
         @page {
             margin: 0mm !important; 
-            size: auto;
+            size: auto; 
         }
 
         html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-            /* 인쇄 시에는 글자를 무조건 검정으로 (종이 절약/가독성) */
-            color: black !important; 
-            background-color: white !important;
+            margin: 0 !important; 
+            padding: 0 !important; 
+            height: auto !important; 
+            min-height: 0 !important; 
+            overflow: visible !important; 
         }
         
         .stApp {
-            min-height: 0 !important;
-            height: auto !important;
-            overflow: visible !important;
+            min-height: 0 !important; 
+            height: auto !important; 
+            overflow: visible !important; 
+            background-color: white !important; 
         }
 
         .block-container {
             margin: 15mm 15mm 0 15mm !important; 
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            width: auto !important;
-        }
-
-        /* 인쇄 시 모든 텍스트 강제 검정색 */
-        h1, h3, .question-text, p, div {
-            color: black !important;
-            -webkit-text-fill-color: black !important;
+            padding-top: 0 !important; 
+            padding-bottom: 0 !important; 
+            width: auto !important; 
         }
 
         section[data-testid="stSidebar"], 
@@ -117,23 +148,23 @@ st.markdown("""
         button, 
         .stButton, 
         div[data-testid="stHorizontalBlock"], 
-        .stProgress,
-        iframe {
-            display: none !important;
-            height: 0 !important;
-            width: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
+        .stProgress, 
+        iframe,
+        textarea, 
+        .stTextArea {
+            display: none !important; 
+            height: 0 !important; 
+            width: 0 !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            opacity: 0 !important; 
+            visibility: hidden !important; 
         }
         
         iframe[title="streamlit.components.v1.components.html"] {
-            display: none !important;
-            height: 0 !important;
+            display: none !important; 
+            height: 0 !important; 
         }
-
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -187,11 +218,11 @@ OPTIONS = ["전혀 아니다", "아니다", "보통이다", "그렇다", "매우
 # 세션 상태 초기화
 # ==========================================
 if 'step' not in st.session_state:
-    st.session_state['step'] = 0  # 0: 정보입력, 1~N: 질문, N+1~: 증상, 999: 결과
+    st.session_state['step'] = 0  
 if 'user_info' not in st.session_state:
     st.session_state['user_info'] = {}
 if 'answers_score' not in st.session_state:
-    st.session_state['answers_score'] = [2] * len(QUESTIONS) # 기본값 보통(2)
+    st.session_state['answers_score'] = [2] * len(QUESTIONS) 
 if 'answers_log' not in st.session_state:
     st.session_state['answers_log'] = [""] * len(QUESTIONS)
 if 'symptom_answers' not in st.session_state:
@@ -202,37 +233,11 @@ if 'final_result' not in st.session_state:
 # ==========================================
 # 로직 함수 (이메일 및 추천)
 # ==========================================
-def send_email_result(info, constitution, scores, recommendation, answers_summary):
+def send_email_logic(target_email, subject, body):
     try:
-        subject = f"[사상체질진단 결과] {info['name']}님 ({info['birth']})"
-        scores_str = ", ".join([f"{TYPE_MAP[k]}: {v:.1f}점" for k, v in scores.items()])
-
-        body = f"""
-[사용자 기본 정보]
-- 이름: {info['name']}
-- 생년월일: {info['birth']}
-- 키/몸무게: {info.get('height','')}cm / {info.get('weight','')}kg
-- 진단 일시: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-[건강 상세 정보]
-- 약: {info.get('meds','')}
-- 병력: {info.get('history','')}
-- 코멘트: {info.get('comment','')}
-
-[진단 결과]
-- 체질: {TYPE_MAP.get(constitution, '알수없음')}
-- 점수: {scores_str}
-
-[추천 처방]
-- 병증: {recommendation['condition']}
-- 처방: {recommendation['prescription']}
-
-[설문 응답 상세]
-{answers_summary}
-        """
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
-        msg['To'] = RECEIVER_EMAIL
+        msg['To'] = target_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
 
@@ -243,7 +248,7 @@ def send_email_result(info, constitution, scores, recommendation, answers_summar
         server.quit()
         return True
     except Exception as e:
-        print(f"Email Fail: {e}")
+        print(f"Email Fail to {target_email}: {e}")
         return False
 
 def get_recommendation(constitution, symptoms):
@@ -286,6 +291,40 @@ def get_recommendation(constitution, symptoms):
     
     return {"condition": "정보 부족", "desc": "", "prescription": ""}
 
+def go_shortcut(selected_type):
+    # 단축 경로는 결과가 바로 보이므로, 이 기능은 '사용자 결과 숨김' 요청에 따라 
+    # 관리자에게만 데이터를 보내고 사용자에겐 '완료' 메시지만 보여주는 식으로 변경하거나
+    # 단순히 입력을 건너뛰고 바로 완료 화면으로 가게 처리합니다.
+    if 'name' not in st.session_state['user_info']:
+        st.session_state['user_info'] = {
+            'name': '방문자', 'birth': '-', 
+            'height': '-', 'weight': '-', 
+            'meds': '-', 'history': '-', 'comment': '체질 바로보기 선택'
+        }
+    
+    fake_scores = {'TY': 20, 'SY': 20, 'TE': 20, 'SE': 20}
+    fake_scores[selected_type] = 100.0
+    
+    fake_symptoms = {}
+    if selected_type == 'SE':
+        fake_symptoms = {'pain': "몸살 기운 (으슬으슬 춥고 열이 남)", 'sweat': "땀이 거의 나지 않는다", 'stool': "설사를 하거나 묽다"}
+    elif selected_type == 'SY':
+        fake_symptoms = {'pain': "속 문제", 'stool': "변비가 있거나 잘 안 나온다", 'sweat': "보통"}
+    elif selected_type == 'TE':
+        fake_symptoms = {'pain': "몸살 기운 (으슬으슬 춥고 열이 남)", 'sweat': "보통", 'stool': "보통"}
+    else: # TY
+        fake_symptoms = {'pain': "보통", 'sweat': "보통", 'stool': "보통"}
+        
+    rec = get_recommendation(selected_type, fake_symptoms)
+    
+    st.session_state['final_result'] = {
+        'code': selected_type,
+        'scores': fake_scores,
+        'rec': rec
+    }
+    st.session_state['step'] = 999
+    st.rerun()
+
 # ==========================================
 # 화면 렌더링 함수
 # ==========================================
@@ -304,19 +343,22 @@ def main():
     # STEP 0: 기본 정보 입력
     # ----------------------------------
     if current_step == 0:
-        st.title("🩺 디스코한의원 문진표")
-        st.info("이 프로그램은 한의표준임상진료지침을 바탕으로 제작했습니다. 꼼꼼하게 읽고 작성해주십시오.")
+        st.markdown("<h1 style='text-align: center;'>사상체질 자가진단</h1>", unsafe_allow_html=True)
+        st.info("본 프로그램은 나에게 꼭 맞는 건강 관리의 시작을 위해 사상 체질을 진단하는 프로그램입니다. 객관성과 정확도를 높이기 위해 전국 한의대 교수진이 집필한 사상체질병증 한의표준임상진료지침을 준수하여 40개 문항으로 제작되었습니다. 정확한 사상 체질 진단을 위해 각 질문을 꼼꼼하게 읽고 작성해주십시오.")
         
         with st.form("info_form"):
             name = st.text_input("이름 (필수)", placeholder="홍길동")
             birth = st.text_input("생년월일 (필수)", placeholder="예: 1980.01.01")
+            
+            # 이메일 입력란 삭제됨
+            
             col1, col2 = st.columns(2)
             with col1: height = st.text_input("키 (cm)", placeholder="175")
             with col2: weight = st.text_input("몸무게 (kg)", placeholder="70")
             
             meds = st.text_input("복용 중인 약 (선택)")
             history = st.text_input("과거 병력 (선택)")
-            comment = st.text_area("원장님께 하고 싶은 말씀 (선택)", height=80)
+            comment = st.text_area("증상 및 기타 (선택)", height=80)
             
             if st.form_submit_button("진단 시작하기", use_container_width=True):
                 if not name or not birth:
@@ -329,6 +371,30 @@ def main():
                     go_next()
                     st.rerun()
 
+        st.write("")
+        st.markdown("---")
+        st.subheader("⚡ 체질별 결과 바로보기 (설문 건너뛰기)")
+        st.caption("아래 버튼을 누르면 설문 없이 즉시 제출 완료 처리하고, 해당 체질 데이터를 관리자에게 전송합니다.")
+        
+        if name:
+             st.session_state['user_info']['name'] = name
+             st.session_state['user_info']['birth'] = birth
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            if st.button("☀️ 태양인", use_container_width=True):
+                go_shortcut('TY')
+        with c2:
+            if st.button("🔥 소양인", use_container_width=True):
+                go_shortcut('SY')
+        with c3:
+            if st.button("🌲 태음인", use_container_width=True):
+                go_shortcut('TE')
+        with c4:
+            if st.button("💧 소음인", use_container_width=True):
+                go_shortcut('SE')
+
+
     # ----------------------------------
     # STEP 1 ~ N: 개별 질문
     # ----------------------------------
@@ -336,17 +402,14 @@ def main():
         q_idx = current_step - 1
         q_data = QUESTIONS[q_idx]
         
-        # 진행률 표시
         progress = q_idx / total_q
         st.progress(progress)
         st.caption(f"질문 {current_step} / {total_q}")
         
         st.markdown(f"<div class='question-text'>Q{current_step}.<br>{q_data['q']}</div>", unsafe_allow_html=True)
         
-        # 이전 선택값 불러오기 (없으면 '보통이다')
         default_idx = st.session_state['answers_score'][q_idx]
         
-        # 수직 라디오 버튼 (horizontal=False)
         choice = st.radio(
             "답변을 선택하세요",
             OPTIONS,
@@ -359,7 +422,6 @@ def main():
         st.write("")
         st.write("")
         
-        # 버튼을 2개 컬럼으로 나눔 (이전 / 다음)
         col_prev, col_next = st.columns(2)
         
         with col_prev:
@@ -376,7 +438,7 @@ def main():
                 st.rerun()
 
     # ----------------------------------
-    # STEP N+1 ~ N+3: 증상 질문 (처방용)
+    # STEP N+1 ~ N+3: 증상 질문
     # ----------------------------------
     elif current_step == total_q + 1:
         st.progress(1.0)
@@ -385,11 +447,11 @@ def main():
         
         col_prev, col_next = st.columns(2)
         with col_prev:
-            if st.button("⬅️ 이전", key="prev_sym1", use_container_width=True):
+            if st.button("⬅️ 이전", use_container_width=True):
                 go_prev()
                 st.rerun()
         with col_next:
-            if st.button("다음 ➡️", key="next_sym1", use_container_width=True):
+            if st.button("다음 ➡️", use_container_width=True):
                 st.session_state['symptom_answers']['pain'] = ans
                 go_next()
                 st.rerun()
@@ -401,11 +463,11 @@ def main():
         
         col_prev, col_next = st.columns(2)
         with col_prev:
-            if st.button("⬅️ 이전", key="prev_sym2", use_container_width=True):
+            if st.button("⬅️ 이전", use_container_width=True):
                 go_prev()
                 st.rerun()
         with col_next:
-            if st.button("다음 ➡️", key="next_sym2", use_container_width=True):
+            if st.button("다음 ➡️", use_container_width=True):
                 st.session_state['symptom_answers']['sweat'] = ans
                 go_next()
                 st.rerun()
@@ -417,14 +479,13 @@ def main():
         
         col_prev, col_next = st.columns(2)
         with col_prev:
-            if st.button("⬅️ 이전", key="prev_sym3", use_container_width=True):
+            if st.button("⬅️ 이전", use_container_width=True):
                 go_prev()
                 st.rerun()
         with col_next:
-            if st.button("설문 완료 (결과 전송)", key="finish", use_container_width=True):
+            if st.button("제출 하기", use_container_width=True):
                 st.session_state['symptom_answers']['stool'] = ans
                 
-                # --- 계산 로직 수행 ---
                 raw_scores = {'TY': 0, 'SY': 0, 'TE': 0, 'SE': 0}
                 type_counts = {'TY': 0, 'SY': 0, 'TE': 0, 'SE': 0}
                 
@@ -436,22 +497,58 @@ def main():
                 avg_scores = {k: (v / type_counts[k] if type_counts[k] > 0 else 0) for k, v in raw_scores.items()}
                 max_score = max(avg_scores.values())
                 result_types = [k for k, v in avg_scores.items() if v == max_score]
-                my_type_code = result_types[0]
+                my_type_code = result_types[0] 
                 
                 recommendation = get_recommendation(my_type_code, st.session_state['symptom_answers'])
                 
-                # 이메일 전송
                 with st.spinner("결과 분석 및 전송 중..."):
                     answers_summary = "\n".join(st.session_state['answers_log'])
                     answers_summary += f"\n[증상] Pain: {st.session_state['symptom_answers']['pain']}"
                     answers_summary += f"\n[증상] Sweat: {st.session_state['symptom_answers']['sweat']}"
                     answers_summary += f"\n[증상] Stool: {st.session_state['symptom_answers']['stool']}"
                     
-                    send_email_result(
-                        st.session_state['user_info'], my_type_code, avg_scores, recommendation, answers_summary
-                    )
+                    scores_str = ", ".join([f"{TYPE_MAP[k]}: {v:.1f}점" for k, v in avg_scores.items()])
+                    info = st.session_state['user_info']
+
+                    # 1. 관리자에게 보내는 메일 (처방 포함 전체 내용 + 사용자 이메일 정보 포함)
+                    admin_body = f"""
+[관리자 알림] 사용자 진단 결과
+이름: {info['name']} ({info['birth']})
+이메일: {info.get('email', '미입력')}
+키/몸무게: {info.get('height','')}cm / {info.get('weight','')}kg
+체질: {TYPE_MAP.get(my_type_code)}
+점수: {scores_str}
+
+[건강 정보]
+약: {info.get('meds','')}
+병력: {info.get('history','')}
+코멘트: {info.get('comment','')}
+
+[추천처방]
+병증: {recommendation['condition']}
+처방: {recommendation['prescription']}
+설명: {recommendation['desc']}
+
+[설문응답 로그]
+{answers_summary}
+                    """
+                    send_email_logic(RECEIVER_EMAIL, f"[관리자] {info['name']}님 결과", admin_body)
+
+                    # 2. 사용자에게 보내는 메일 (제출 확인용, 결과 제외) -> 이메일 입력 삭제로 작동 안 함
+                    user_email = info.get('email')
+                    if user_email:
+                        user_body = f"""
+안녕하세요, {info['name']}님.
+
+디스코 한의원 사상체질 문진표가 성공적으로 제출되었습니다.
+작성해주신 내용을 바탕으로 진료실에서 원장님과 상담 후 정확한 진단 결과를 안내해 드리겠습니다.
+
+[제출 일시] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+감사합니다.
+                        """
+                        send_email_logic(user_email, f"[{info['name']}님] 문진표 제출 완료 안내", user_body)
                 
-                # 결과 저장
                 st.session_state['final_result'] = {
                     'code': my_type_code,
                     'scores': avg_scores,
@@ -461,196 +558,51 @@ def main():
                 st.rerun()
 
     # ----------------------------------
-    # 결과 화면
+    # [STEP 999] 제출 완료 화면 (결과 숨김)
     # ----------------------------------
     elif current_step == 999:
-        res = st.session_state['final_result']
-        my_code = res['code']
-        rec = res['rec']
-        scores = res['scores']
-
         st.balloons()
         
-        # 동점자 처리 및 타이틀
-        max_score = max(scores.values())
-        tied_keys = [k for k, v in scores.items() if v == max_score]
-
-        if len(tied_keys) > 1:
-            tied_names = [TYPE_MAP[k] for k in tied_keys]
-            title_text = " 또는 ".join(tied_names)
-            st.title(f"🎉 당신은 [{title_text}]일 확률이 같습니다!")
-            st.warning(f"📢 **알림:** 점수가 동일하여 **{title_text}** 모두 해당될 가능성이 있습니다.\n\n시스템은 그중 **[{TYPE_MAP[my_code]}]**을 기준으로 상세 결과와 처방을 보여드립니다.")
-            my_name = TYPE_MAP[my_code]
-        else:
-            my_name = TYPE_MAP[my_code]
-            st.title(f"🎉 당신은 [{my_name}] 입니다!")
-
-        # 차트 표시
-        st.write("체질별 점수")
-        chart_df = pd.DataFrame({'체질': [TYPE_MAP[k] for k in scores], '점수': list(scores.values())})
-        st.bar_chart(chart_df.set_index('체질'))
+        st.success("✅ 문진표 작성이 완료되었습니다!")
         
-        # 처방 표시
-        st.success(f"### 💊 추천 처방: {rec['prescription']}")
-        st.info(f"**상태:** {rec['condition']}\n\n**설명:** {rec['desc']}")
+        st.markdown("""
+        <div style="text-align: center; margin: 50px 0;">
+            <h3>설문에 참여해 주셔서 감사합니다.</h3>
+            <p style="font-size: 1.1rem; line-height: 1.6;">
+            작성하신 내용은 원장님께 안전하게 전달되었습니다.<br>
+            잠시만 대기해 주시면, <b>진료실에서 상세한 상담 및 체질 진단</b>을 도와드리겠습니다.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # ------------------------------------------
-        # [중요] 인쇄 시 페이지 나누기 (Page Break)
-        # ------------------------------------------
-        st.markdown('<div class="page-break"></div>', unsafe_allow_html=True)
+        # [안내 문구 추가]
+        if st.session_state['user_info'].get('email'):
+            st.info(f"📧 입력하신 이메일({st.session_state['user_info']['email']})로 제출 확인 메일을 보내드렸습니다.")
 
         st.markdown("---")
-        st.header(f"📋 {my_name} 상세 건강 가이드")
 
-        # =========================================================
-        # 상세 건강 가이드 (이전 STEP 1000 내용 통합)
-        # =========================================================
-        if my_code == 'SE': # 소음인
-            st.markdown("""
-            **1. 소음인의 특징**
-            * 몸이 찬 편입니다.
-            * 전반적인 체력이 약한 편입니다.
-            * 소화기의 기능이 약해지기 쉽습니다.
-            """)
-            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
-            st.warning("""
-            * **전신:** 무리를 하지 않았는데도 피로감이 지속되고, 아침에 일어나기 힘듭니다.
-            * **소화:** 식욕이 떨어지고 소화가 잘 안 되며, 배에 가스가 찹니다.
-            * **배설:** 설사를 자주 하거나, 대변이 가늘면서 시원하지 않습니다.
-            * **기타:** 손발과 배가 차고, 특별한 이유 없이 마음이 늘 불안합니다.
-            """)
-            st.info("""
-            **💡 평소 생활 실천 사항**
-            1. **보온:** 항상 몸을 따뜻하게 합니다.
-            2. **휴식:** 과로를 피하고 적절한 휴식이 필요합니다.
-            3. **식사:** 규칙적인 식사가 중요하며, 따뜻한 성질의 음식이나 약간의 자극성 있는 조미료가 좋습니다.
-            """)
-            
-            st.subheader("🥗 소음인에게 이로운 음식")
-            food_data = {
-                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
-                "권장 음식": [
-                    "백미, 차조, 찹쌀, 감자, 옥수수 / (떡, 누룽지)",
-                    "닭고기(껍질/기름 제거), 명태, 조기, 도미, 대구, 민어, 농어, 가자미, 멸치",
-                    "삼치, 갈치, 장어, 민어, 도루묵",
-                    "닭고기(껍질 포함), 개고기, 뱀장어",
-                    "깻잎, 냉이, 시금치, 양배추, 브로콜리, 마늘, 파, 고추, 양파, 부추, 쑥",
-                    "들깨, 참기름, 산양유 / 사과, 귤, 토마토, 복숭아, 대추, 유자"
-                ]
-            }
-            st.table(pd.DataFrame(food_data).set_index("분류"))
+        # [추가 요청] 추가 문의 사항 입력 필드
+        st.markdown("##### ❓ 궁금한 점이 있으신가요?")
+        feedback = st.text_area("체질이나 증상에 대해 더 궁금한 점이 있다면 적어주세요. 진료 시 참고하겠습니다. (선택)", height=80, key="final_feedback")
 
-        elif my_code == 'SY': # 소양인
-            st.markdown("""
-            **1. 소양인의 특징**
-            * 몸에 열이 많습니다.
-            * 신경이 예민하고, 피부, 장, 방광 등이 과민한 편입니다.
-            """)
-            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
-            st.warning("""
-            * **수면/정서:** 잠들기 어렵고 자주 깨며, 마음이 조급하고 불안합니다.
-            * **배설:** 소변을 자주 보거나 색이 진하며, 변비나 설사가 잦습니다.
-            * **신체:** 얼굴이나 피부 트러블이 잦고, 입이 마르며 갈증이 납니다.
-            * **소화:** 가슴이 답답하고 속이 쓰리거나 구역질을 합니다.
-            """)
-            st.info("""
-            **💡 평소 생활 실천 사항**
-            1. **수면/마음:** 충분한 수면을 취하고, 매사에 여유를 가지려 노력하세요.
-            2. **식사:** 천천히 식사하며, 서늘한 성질의 음식/해물/채소가 좋습니다.
-            3. **피할 것:** 맵고 짠 음식, 성질이 더운 음식을 피하세요.
-            4. **운동:** 하체를 강화시켜 주는 운동(등산, 자전거 등)이 좋습니다.
-            """)
-            
-            st.subheader("🥗 소양인에게 이로운 음식")
-            food_data = {
-                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
-                "권장 음식": [
-                    "보리, 팥, 녹두 / (메밀, 고구마, 토란)",
-                    "돼지고기(살코기), 오리고기, 복어, 굴, 새우, 오징어, 낙지, 조개, 게, 해삼",
-                    "돼지고기(안심), 계란 / (두부, 고등어, 꽁치)",
-                    "삼겹살, 족발, 돼지갈비, 베이컨",
-                    "오이, 가지, 배추, 상추, 우엉, 숙주나물, 죽순",
-                    "참깨, 참기름, 우유 / 딸기, 수박, 바나나, 참외, 메론, 키위"
-                ]
-            }
-            st.table(pd.DataFrame(food_data).set_index("분류"))
+        if st.button("📨 문의 내용 추가 전송"):
+            if feedback:
+                # 관리자에게 메일 발송
+                f_subject = f"[추가문의] {st.session_state['user_info']['name']}님 ({st.session_state['user_info']['birth']})"
+                f_body = f"""
+                [추가 문의 사항]
+                작성자: {st.session_state['user_info']['name']}
+                연락처(이메일): {st.session_state['user_info'].get('email', '미입력')}
 
-        elif my_code == 'TE': # 태음인
-            st.markdown("""
-            **1. 태음인의 특징**
-            * 섭취한 에너지를 소모시키고 배설시키는 것이 취약합니다.
-            * 체구가 큰 편이고, 식욕과 위장기능이 좋아 비만해지기 쉽습니다.
-            """)
-            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
-            st.warning("""
-            * **체중/식욕:** 살이 찌고, 배가 부른데도 자꾸 먹게 됩니다.
-            * **배설:** 대변이 굳거나 설사가 잦아지는 등 양상이 달라집니다.
-            * **신체:** 땀이 잘 나지 않거나, 상체로만 진땀이 많이 납니다. 아침에 얼굴/손발이 붓습니다.
-            * **피부:** 얼굴이 붉어지고 열감이 많으며, 피부 트러블이 잦습니다.
-            """)
-            st.info("""
-            **💡 평소 생활 실천 사항**
-            1. **관리:** 변비와 체중 증가를 항상 경계해야 합니다.
-            2. **식사:** 과식/폭식/야식을 피하고, 천천히 먹습니다. 식후 바로 눕지 마세요.
-            3. **운동:** 땀을 흘릴 정도의 유산소 운동(열량 소모 많은 운동)이 좋습니다.
-            """)
-            
-            st.subheader("🥗 태음인에게 이로운 음식")
-            food_data = {
-                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
-                "권장 음식": [
-                    "현미, 율무, 콩, 고구마, 옥수수, 토란, 밤, 마, 잣, 호두, 땅콩",
-                    "소고기(사태, 홍두깨), 대구, 조기, 명태, 민어, 오징어",
-                    "소고기(등심, 안심), 고등어, 꽁치, 갈치, 두부, 콩비지",
-                    "소갈비, 뱀장어, 유부, 치즈",
-                    "무, 호박, 콩나물, 고사리, 버섯, 김, 미역, 다시마, 도라지, 연근, 당근",
-                    "들기름, 올리브유, 우유, 두유 / 배, 매실, 자두, 살구"
-                ]
-            }
-            st.table(pd.DataFrame(food_data).set_index("분류"))
+                문의 내용:
+                {feedback}
+                """
+                send_email_logic(RECEIVER_EMAIL, f_subject, f_body)
+                st.success("소중한 의견이 원장님께 전달되었습니다!")
+            else:
+                st.toast("내용을 입력해주세요.")
 
-        elif my_code == 'TY': # 태양인
-            st.markdown("""
-            **1. 태양인의 특징**
-            * 에너지를 축적하는 기능은 약하고, 발산/소모시키는 기능은 강합니다.
-            * 머리와 목덜미가 발달한 반면, 허리나 하체가 빈약한 편입니다.
-            """)
-            st.subheader("🚨 건강이 안 좋아지면 나타나는 증상")
-            st.warning("""
-            * **신체:** 쉽게 몸살이 나고, 하체가 쉽게 피로하여 오래 걷기 힘듭니다.
-            * **배설:** 소변 양과 횟수가 줄거나, 대변이 염소똥처럼 굳어집니다.
-            * **입/소화:** 입 안에 맑은 침이나 거품이 고이고, 구역질을 합니다.
-            * **정서:** 매사에 조급해지고 화가 잘 납니다.
-            """)
-            st.info("""
-            **💡 평소 생활 실천 사항**
-            1. **식사:** 매운 자극성 음식, 고지방 음식을 피하고 담백한 음식/해물/채소가 좋습니다.
-            2. **운동:** 과격한 운동은 피하고, 허리/하체 근력 강화 운동을 하세요.
-            3. **마음:** 조급해하지 말고 여유를 가지며, 원만한 인간관계를 유지하세요.
-            """)
-            
-            st.subheader("🥗 태양인에게 이로운 음식")
-            food_data = {
-                "분류": ["곡류군", "저지방 어육류", "중지방 어육류", "고지방 어육류", "채소군", "지방군/우유/과일"],
-                "권장 음식": [
-                    "메밀(국수, 묵, 밥) / (보리, 녹두, 팥)",
-                    "굴, 새우, 게, 오징어, 문어, 전복, 조개, 해삼, 홍합 / (흰살생선)",
-                    "(사용 가능) 고등어, 꽁치, 장어",
-                    "(해당 없음 / 육류는 피하는 것이 좋음)",
-                    "상추, 깻잎, 배추, 오이, 가지, 시금치, 우엉, 숙주나물, 죽순",
-                    "참깨 / 포도, 머루, 다래, 감, 키위, 파인애플, 오렌지"
-                ]
-            }
-            st.table(pd.DataFrame(food_data).set_index("분류"))
-
-        st.markdown("---")
-        
-        # 인쇄 버튼 (인쇄 시에는 보이지 않음)
-        print_btn_code = """
-        <script>function printPage() { window.parent.print(); }</script>
-        <button onclick="printPage()" style="width:100%; padding:10px; background:white; border:1px solid #ddd; border-radius:5px;">🖨️ 결과 저장/인쇄</button>
-        """
-        components.html(print_btn_code, height=50)
+        st.write("") 
         
         if st.button("🔄 처음부터 다시하기", use_container_width=True):
             st.session_state.clear()
