@@ -23,7 +23,7 @@ RECEIVER_EMAIL = "ds1lih@naver.com" # 관리자 이메일
 # ==========================================
 # 1. 페이지 설정 및 스타일
 # ==========================================
-st.set_page_config(page_title="사상체질 문진표", layout="centered")
+st.set_page_config(page_title="디스코한의원 문진표", layout="centered")
 
 st.markdown("""
     <style>
@@ -309,8 +309,8 @@ def main():
     # STEP 0: 기본 정보 입력
     # ----------------------------------
     if current_step == 0:
-        st.markdown("<h1 style='text-align: center;'>사상체질 자가진단</h1>", unsafe_allow_html=True)
-        st.info("본 프로그램은 나에게 꼭 맞는 건강 관리의 시작을 위해 사상 체질을 진단하는 프로그램입니다. 객관성과 정확도를 높이기 위해 전국 한의대 교수진이 집필한 사상체질병증 한의표준임상진료지침을 준수하여 40개 문항으로 제작되었습니다. 정확한 사상 체질 진단을 위해 각 질문을 꼼꼼하게 읽고 작성해주십시오.")
+        st.markdown("<h1 style='text-align: center;'>디스코한의원 문진표</h1>", unsafe_allow_html=True)
+        st.info("이 프로그램은 한의표준임상진료지침을 바탕으로 제작했습니다. 꼼꼼하게 읽고 작성해주십시오.")
         
         with st.form("info_form"):
             name = st.text_input("이름 (필수)", placeholder="홍길동")
