@@ -291,40 +291,6 @@ def get_recommendation(constitution, symptoms):
     
     return {"condition": "정보 부족", "desc": "", "prescription": ""}
 
-def go_shortcut(selected_type):
-    # 단축 경로는 결과가 바로 보이므로, 이 기능은 '사용자 결과 숨김' 요청에 따라 
-    # 관리자에게만 데이터를 보내고 사용자에겐 '완료' 메시지만 보여주는 식으로 변경하거나
-    # 단순히 입력을 건너뛰고 바로 완료 화면으로 가게 처리합니다.
-    if 'name' not in st.session_state['user_info']:
-        st.session_state['user_info'] = {
-            'name': '방문자', 'birth': '-', 
-            'height': '-', 'weight': '-', 
-            'meds': '-', 'history': '-', 'comment': '체질 바로보기 선택'
-        }
-    
-    fake_scores = {'TY': 20, 'SY': 20, 'TE': 20, 'SE': 20}
-    fake_scores[selected_type] = 100.0
-    
-    fake_symptoms = {}
-    if selected_type == 'SE':
-        fake_symptoms = {'pain': "몸살 기운 (으슬으슬 춥고 열이 남)", 'sweat': "땀이 거의 나지 않는다", 'stool': "설사를 하거나 묽다"}
-    elif selected_type == 'SY':
-        fake_symptoms = {'pain': "속 문제", 'stool': "변비가 있거나 잘 안 나온다", 'sweat': "보통"}
-    elif selected_type == 'TE':
-        fake_symptoms = {'pain': "몸살 기운 (으슬으슬 춥고 열이 남)", 'sweat': "보통", 'stool': "보통"}
-    else: # TY
-        fake_symptoms = {'pain': "보통", 'sweat': "보통", 'stool': "보통"}
-        
-    rec = get_recommendation(selected_type, fake_symptoms)
-    
-    st.session_state['final_result'] = {
-        'code': selected_type,
-        'scores': fake_scores,
-        'rec': rec
-    }
-    st.session_state['step'] = 999
-    st.rerun()
-
 # ==========================================
 # 화면 렌더링 함수
 # ==========================================
@@ -371,29 +337,7 @@ def main():
                     go_next()
                     st.rerun()
 
-        st.write("")
-        st.markdown("---")
-        st.subheader("⚡ 체질별 결과 바로보기 (설문 건너뛰기)")
-        st.caption("아래 버튼을 누르면 설문 없이 즉시 제출 완료 처리하고, 해당 체질 데이터를 관리자에게 전송합니다.")
-        
-        if name:
-             st.session_state['user_info']['name'] = name
-             st.session_state['user_info']['birth'] = birth
-
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            if st.button("☀️ 태양인", use_container_width=True):
-                go_shortcut('TY')
-        with c2:
-            if st.button("🔥 소양인", use_container_width=True):
-                go_shortcut('SY')
-        with c3:
-            if st.button("🌲 태음인", use_container_width=True):
-                go_shortcut('TE')
-        with c4:
-            if st.button("💧 소음인", use_container_width=True):
-                go_shortcut('SE')
-
+        # [삭제됨] 체질별 결과 바로보기 (설문 건너뛰기) 섹션 제거
 
     # ----------------------------------
     # STEP 1 ~ N: 개별 질문
@@ -534,21 +478,6 @@ def main():
                     """
                     send_email_logic(RECEIVER_EMAIL, f"[관리자] {info['name']}님 결과", admin_body)
 
-                    # 2. 사용자에게 보내는 메일 (제출 확인용, 결과 제외) -> 이메일 입력 삭제로 작동 안 함
-                    user_email = info.get('email')
-                    if user_email:
-                        user_body = f"""
-안녕하세요, {info['name']}님.
-
-디스코 한의원 사상체질 문진표가 성공적으로 제출되었습니다.
-작성해주신 내용을 바탕으로 진료실에서 원장님과 상담 후 정확한 진단 결과를 안내해 드리겠습니다.
-
-[제출 일시] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-감사합니다.
-                        """
-                        send_email_logic(user_email, f"[{info['name']}님] 문진표 제출 완료 안내", user_body)
-                
                 st.session_state['final_result'] = {
                     'code': my_type_code,
                     'scores': avg_scores,
@@ -569,38 +498,15 @@ def main():
         <div style="text-align: center; margin: 50px 0;">
             <h3>설문에 참여해 주셔서 감사합니다.</h3>
             <p style="font-size: 1.1rem; line-height: 1.6;">
-            작성하신 내용은 원장님께 안전하게 전달되었습니다.<br>
-            잠시만 대기해 주시면, <b>진료실에서 상세한 상담 및 체질 진단</b>을 도와드리겠습니다.
+            작성하신 내용은 원장님께 안전하게 전달되었습니다.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
-        # [안내 문구 추가]
         if st.session_state['user_info'].get('email'):
             st.info(f"📧 입력하신 이메일({st.session_state['user_info']['email']})로 제출 확인 메일을 보내드렸습니다.")
 
-        st.markdown("---")
-
-        # [추가 요청] 추가 문의 사항 입력 필드
-        st.markdown("##### ❓ 궁금한 점이 있으신가요?")
-        feedback = st.text_area("체질이나 증상에 대해 더 궁금한 점이 있다면 적어주세요. 진료 시 참고하겠습니다. (선택)", height=80, key="final_feedback")
-
-        if st.button("📨 문의 내용 추가 전송"):
-            if feedback:
-                # 관리자에게 메일 발송
-                f_subject = f"[추가문의] {st.session_state['user_info']['name']}님 ({st.session_state['user_info']['birth']})"
-                f_body = f"""
-                [추가 문의 사항]
-                작성자: {st.session_state['user_info']['name']}
-                연락처(이메일): {st.session_state['user_info'].get('email', '미입력')}
-
-                문의 내용:
-                {feedback}
-                """
-                send_email_logic(RECEIVER_EMAIL, f_subject, f_body)
-                st.success("소중한 의견이 원장님께 전달되었습니다!")
-            else:
-                st.toast("내용을 입력해주세요.")
+        # [삭제됨] 추가 문의 사항 입력란 및 전송 버튼
 
         st.write("") 
         
