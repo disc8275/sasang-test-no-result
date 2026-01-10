@@ -310,7 +310,7 @@ def main():
     # ----------------------------------
     if current_step == 0:
         st.markdown("<h1 style='text-align: center;'>디스코한의원 문진표</h1>", unsafe_allow_html=True)
-        st.info("이 프로그램은 한의표준임상진료지침을 바탕으로 제작했습니다. 꼼꼼하게 읽고 작성해주십시오.")
+        st.info("이 프로그램은 한의표준임상진료지침을 바탕으로 제작했습니다. 꼼꼼하게 읽고 작성해주세요.")
         
         with st.form("info_form"):
             name = st.text_input("이름 (필수)", placeholder="홍길동")
