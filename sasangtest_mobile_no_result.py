@@ -14,9 +14,9 @@ try:
     SENDER_EMAIL = st.secrets["SENDER_EMAIL"]
     SENDER_PASSWORD = st.secrets["SENDER_PASSWORD"]
 except:
-    # 로컬 테스트용 더미 값
-    SENDER_EMAIL = "disc8275@gmail.com" 
-    SENDER_PASSWORD = "axrd kith cizs svzg" 
+    # 로컬 테스트용 더미 값 (실제 배포시 secrets 설정 필수)
+    SENDER_EMAIL = "test@example.com"
+    SENDER_PASSWORD = "password"
 
 RECEIVER_EMAIL = "ds1lih@naver.com" # 관리자 이메일
 
