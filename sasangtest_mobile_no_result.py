@@ -346,7 +346,7 @@ for pattern_key, data in PATTERNS.items():
 # ==========================================
 # 1. 페이지 설정 및 스타일
 # ==========================================
-st.set_page_config(page_title="디스코한의원 종합 문진", layout="centered")
+st.set_page_config(page_title="디스코한의원 종합 문진표 (처방용)", layout="centered")
 
 st.markdown("""
     <style>
